@@ -1,0 +1,15 @@
+[package]
+name = "build_details_test"
+version = "0.1.0"
+authors = ["Sam Wilson <tecywiz121@hotmail.com>"]
+
+[build-dependencies]
+build_details = { path = ".." }
+
+[dependencies]
+phf = "0.7.22"
+
+[features]
+default = ["on-by-default"]
+on-by-default = []
+off-by-default = []

@@ -1,11 +1,12 @@
 #[macro_use]
 extern crate maplit;
+extern crate phf_codegen;
 
 pub mod error;
 
 use error::*;
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::env;
 use std::fmt;
 use std::fs::File;
@@ -45,6 +46,8 @@ impl BuildDetails {
                 BuildDetail::Authors,
                 BuildDetail::Description,
                 BuildDetail::Homepage,
+                BuildDetail::Cfg,
+                BuildDetail::Features,
             ],
             required: HashSet::new(),
         }
@@ -95,7 +98,7 @@ impl BuildDetails {
         self.write_to(&mut out_file)
     }
 
-    pub fn write_to(&self, out_file: &mut File) -> Result<()> {
+    pub fn write_to(&self, out_file: &mut Write) -> Result<()> {
         for detail in &self.optional {
             writeln!(out_file, "{}", detail.render_option()?)?;
         }
@@ -119,6 +122,8 @@ pub enum BuildDetail {
     Description,
     Homepage,
     OptLevel,
+    Cfg,
+    Features,
     /*
     VersionMajor,
     VersionMinor,
@@ -143,6 +148,9 @@ impl BuildDetail {
 
             Profile => Box::from(BuildEnv::new("PROFILE", "PROFILE")),
             OptLevel => Box::from(BuildEnv::new("OPT_LEVEL", "OPT_LEVEL")),
+
+            Cfg => Box::from(BuildEnvMap::new("CFG", "CARGO_CFG_")),
+            Features => Box::from(BuildEnvList::new("FEATURES", "CARGO_FEATURE_")),
         }
     }
 }
@@ -288,5 +296,82 @@ impl BuildEnv {
             value_type: "&'static str",
             value: BuildEnv(env),
         }
+    }
+}
+
+fn find_matching_vars(prefix: &'static str) -> HashMap<String, String> {
+    env::vars()
+        .filter_map(|(k, v)| {
+            if k.starts_with(prefix) {
+                let k = k[prefix.len()..].to_owned();
+                Some((k, v))
+            } else {
+                None
+            }
+        })
+        .collect()
+}
+
+struct BuildEnvList(Vec<String>);
+
+impl BuildEnvList {
+    pub fn new(name: &'static str, prefix: &'static str) -> Detail<Self> {
+        Detail {
+            name,
+            value_type: "&'static [&'static str]",
+            value: BuildEnvList(find_matching_vars(prefix).into_iter().map(|(k,_)| k).collect()),
+        }
+    }
+}
+
+impl Render for BuildEnvList {
+    fn render_option(&self) -> Result<String> {
+        Ok(format!("Some({})", self.render()?))
+    }
+
+    fn render(&self) -> Result<String> {
+        use std::fmt::Write;
+
+        let mut txt = String::from("&[\n");
+
+        for item in &self.0 {
+            write!(txt, "    {:?},\n", item)?;
+        }
+
+        write!(txt, "]")?;
+
+        Ok(txt)
+    }
+}
+
+struct BuildEnvMap(HashMap<String, String>);
+
+impl BuildEnvMap {
+    pub fn new(name: &'static str, prefix: &'static str) -> Detail<Self> {
+        Detail {
+            name,
+            value_type: "::phf::Map<&'static str, &'static str>",
+            value: BuildEnvMap(find_matching_vars(prefix)),
+        }
+    }
+}
+
+impl Render for BuildEnvMap {
+    fn render_option(&self) -> Result<String> {
+        Ok(format!("Some({})", self.render()?))
+    }
+
+    fn render(&self) -> Result<String> {
+        let mut txt = vec![];
+
+        let mut map = phf_codegen::Map::<&str>::new();
+
+        for (k, v) in &self.0 {
+            map.entry(k, &format!("{:?}", v));
+        }
+
+        map.build(&mut txt)?;
+
+        Ok(String::from_utf8(txt).unwrap())
     }
 }
