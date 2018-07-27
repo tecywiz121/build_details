@@ -6,8 +6,8 @@ extern crate tempfile;
 use build_details::error::Error;
 use build_details::{BuildDetail, BuildDetails};
 
-use std::io::SeekFrom;
 use std::io::prelude::*;
+use std::io::SeekFrom;
 use std::sync::Mutex;
 
 use tempfile::tempfile;

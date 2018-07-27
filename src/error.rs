@@ -1,15 +1,30 @@
+//! Error and Result module.
+
 use std::error::Error as StdError;
 use std::fmt;
 use std::io;
 use std::result::Result as StdResult;
 
+/// Represents errors that can occur while generating the build details.
 #[derive(Debug)]
 pub enum Error {
+    /// A formatting error.
     Fmt(fmt::Error),
+
+    /// An IO error.
     Io(io::Error),
+
+    /// Something was missing, but there's no information as to what it was.
     Missing,
+
+    /// There was a required detail that could not be provided.
     MissingDetail(String),
+
+    /// An environment variable required for code generation wasn't set.
     MissingEnv(&'static str),
+
+    #[doc(hidden)]
+    __Nonexhaustive,
 }
 
 impl fmt::Display for Error {
@@ -20,6 +35,7 @@ impl fmt::Display for Error {
             Error::Missing => write!(f, "Missing value"),
             Error::MissingDetail(x) => write!(f, "Missing value: {}", x),
             Error::MissingEnv(x) => write!(f, "A required environment variable is missing: {}", x),
+            Error::__Nonexhaustive => unreachable!(),
         }
     }
 }
@@ -32,6 +48,7 @@ impl StdError for Error {
             Error::Missing => "missing detail",
             Error::MissingDetail(_) => "missing detail",
             Error::MissingEnv(_) => "missing environment variable",
+            Error::__Nonexhaustive => unreachable!(),
         }
     }
 
@@ -42,6 +59,7 @@ impl StdError for Error {
             Error::Missing => None,
             Error::MissingDetail(_) => None,
             Error::MissingEnv(_) => None,
+            Error::__Nonexhaustive => unreachable!(),
         }
     }
 }
@@ -58,4 +76,5 @@ impl From<fmt::Error> for Error {
     }
 }
 
+/// Wrapper of [`::std::result::Result<T, E>`].
 pub type Result<T> = StdResult<T, Error>;

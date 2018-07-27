@@ -1,3 +1,58 @@
+//! # Build Details
+//!
+//! `build_details` is a code generation helper that provides build information
+//! at runtime.
+//!
+//! There are two steps to adding `build_details` to a crate:
+//!     * Adding/modifying `build.rs`; and
+//!     * Including the generated file.
+//!
+//! ## Invoking Build Details
+//!
+//! Invoking `build_details` is as simple as adding the following snippet to
+//! `build.rs`:
+//!
+//! ```norun
+//! extern crate build_details;
+//!
+//! fn main() {
+//!     build_details::BuildDetails::all()
+//!         .generate("build_details.rs")
+//!         .unwrap();
+//! }
+//! ```
+//!
+//! ## Including Generated File
+//!
+//! In `src/lib.rs`:
+//!
+//! ```nocompile
+//! pub mod build_details {
+//!     include!(concat!(env!("OUT_DIR"), "/build_details.rs"));
+//! }
+//! ```
+//!
+//! ## A note on [`BuildDetail::Cfg`]
+//!
+//! Using [`BuildDetail::Cfg`] requires a runtime dependency on `phf`.
+//!
+//! In `Cargo.toml`, add:
+//!
+//! ```toml
+//! [dependencies]
+//! phf = "0.7"
+//! ```
+//!
+//! In `src/lib.rs` or `src/main.rs`:
+//!
+//! ```nocompile
+//! extern crate phf;
+//! ```
+#![deny(
+    missing_debug_implementations, missing_docs, trivial_casts, trivial_numeric_casts,
+    unused_extern_crates, unused_import_braces, unused_qualifications
+)]
+
 #[macro_use]
 extern crate maplit;
 extern crate phf_codegen;
@@ -14,6 +69,7 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
+/// Code generator for build details. See the crate documentation for an example.
 #[derive(Debug, Clone)]
 pub struct BuildDetails {
     optional: HashSet<BuildDetail>,
@@ -35,6 +91,8 @@ impl Default for BuildDetails {
 }
 
 impl BuildDetails {
+    /// Construct a [`BuildDetails`] instance with all available details marked
+    /// as optional.
     pub fn all() -> Self {
         Self {
             optional: hashset![
@@ -53,12 +111,25 @@ impl BuildDetails {
         }
     }
 
+    /// Construct a [`BuildDetails`] instance with all available details marked
+    /// as required.
+    ///
+    /// This method isn't particularly useful by itself, and will probably need
+    /// customization with [`BuildDetails::include`] and [`BuildDetails::exclude`].
+    ///
+    /// It is impossible to use this method and not break API compatibility if
+    /// new [`BuildDetail`] variants are added.
+    #[doc(hidden)]
     pub fn require_all() -> Self {
         let mut x = Self::all();
         ::std::mem::swap(&mut x.optional, &mut x.required);
         x
     }
 
+    /// Construct a [`BuildDetails`] instance with no included details.
+    ///
+    /// This method isn't particularly useful by itself, and will probably need
+    /// customization with [`BuildDetails::include`] and [`BuildDetails::exclude`].
     pub fn none() -> Self {
         Self {
             optional: HashSet::new(),
@@ -66,24 +137,35 @@ impl BuildDetails {
         }
     }
 
+    /// Include a [`BuildDetail`], and mark it as required.
+    ///
+    /// If a detail is marked as required and isn't available at build time, the
+    /// build will fail.
     pub fn require(&mut self, detail: BuildDetail) -> &mut Self {
         self.optional.remove(&detail);
         self.required.insert(detail);
         self
     }
 
+    /// Include a [`BuildDetail`], and mark it as optional.
+    ///
+    /// If a detail is marked as optional and isn't available at build time, the
+    /// generated value will be `None`.
     pub fn include(&mut self, detail: BuildDetail) -> &mut Self {
         self.required.remove(&detail);
         self.optional.insert(detail);
         self
     }
 
+    /// Exclude a [`BuildDetail`]. It will not show up in the generated output.
     pub fn exclude(&mut self, detail: BuildDetail) -> &mut Self {
         self.required.remove(&detail);
         self.optional.remove(&detail);
         self
     }
 
+    /// Creates a file called `path` in the build's `OUT_DIR` directory. See
+    /// the crate documentation for an example.
     pub fn generate<P: AsRef<Path>>(&self, path: P) -> Result<()> {
         let out_dir = match env::var_os("OUT_DIR") {
             Some(x) => x,
@@ -98,6 +180,7 @@ impl BuildDetails {
         self.write_to(&mut out_file)
     }
 
+    /// Writes the generated code to a [`::std::io::Write'] instead of to a file.
     pub fn write_to(&self, out_file: &mut Write) -> Result<()> {
         for detail in &self.optional {
             writeln!(out_file, "{}", detail.render_option()?)?;
@@ -111,25 +194,49 @@ impl BuildDetails {
     }
 }
 
+/// List of build details that can be included in the generated code.
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub enum BuildDetail {
+    /// Number of seconds since [`::std::time::UNIX_EPOCH`]
     Timestamp,
+
+    /// Equivalent to the `CARGO_PKG_VERSION` environment variable.
     Version,
+
+    /// Equivalent to `PROFILE` in environment variables passed to `build.rs'.
+    ///
+    /// Should usually be `"debug"` or `"release"`.
     Profile,
+
+    /// Equivalent to the `RUSTFLAGS` environment variable.
+    ///
+    /// Note that this isn't _all_ of the flags passed to `rustc`, but instead
+    /// it is only the custom extra flags.
     RustFlags,
+
+    /// Equivalent to the `CARGO_PKG_NAME` environment variable.
     Name,
+
+    /// Equivalent to the `CARGO_PKG_AUTHORS` environment variable.
     Authors,
+
+    /// Equivalent to the `CARGO_PKG_DESCRIPTION` environment variable.
     Description,
+
+    /// Equivalent to the `CARGO_PKG_HOMEPAGE` environment variable.
     Homepage,
+
+    /// Equivalent to the `OPT_LEVEL` environment variable in `build.rs`.
     OptLevel,
+
+    /// Equivalent to the `CARGO_CFG_*` environment variables in `build.rs`.
     Cfg,
+
+    /// Equivalent to the `CARGO_FEATURE_*` environment variables in `build.rs`.
     Features,
-    /*
-    VersionMajor,
-    VersionMinor,
-    VersionPatch,
-    VersionPre,
-    */
+
+    #[doc(hidden)]
+    __Nonexhaustive,
 }
 
 impl BuildDetail {
@@ -151,6 +258,8 @@ impl BuildDetail {
 
             Cfg => Box::from(BuildEnvMap::new("CFG", "CARGO_CFG_")),
             Features => Box::from(BuildEnvList::new("FEATURES", "CARGO_FEATURE_")),
+
+            __Nonexhaustive => unreachable!(),
         }
     }
 }
@@ -319,7 +428,12 @@ impl BuildEnvList {
         Detail {
             name,
             value_type: "&'static [&'static str]",
-            value: BuildEnvList(find_matching_vars(prefix).into_iter().map(|(k,_)| k).collect()),
+            value: BuildEnvList(
+                find_matching_vars(prefix)
+                    .into_iter()
+                    .map(|(k, _)| k)
+                    .collect(),
+            ),
         }
     }
 }
