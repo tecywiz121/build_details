@@ -21,7 +21,7 @@
 //! extern crate build_details;
 //!
 //! fn main() {
-//!     build_details::BuildDetails::all()
+//!     build_details::BuildDetails::default()
 //!         .generate("build_details.rs")
 //!         .unwrap();
 //! }

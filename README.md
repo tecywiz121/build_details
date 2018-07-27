@@ -22,7 +22,7 @@ Invoking `build_details` is as simple as adding the following snippet to
 extern crate build_details;
 
 fn main() {
-    build_details::BuildDetails::all()
+    build_details::BuildDetails::default()
         .generate("build_details.rs")
         .unwrap();
 }
