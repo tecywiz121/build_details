@@ -2,6 +2,11 @@
 name = "build_details"
 version = "0.1.0"
 authors = ["Sam Wilson <tecywiz121@hotmail.com>"]
+description = "build.rs helper that provides build information at runtime"
+repository = "https://github.com/tecywiz121/build_details"
+license = "MPL-2.0"
+keywords = ["build", "codegen", "profile", "build-dependencies"]
+categories = ["development-tools", "development-tools::build-utils"]
 
 [workspace]
 members = [
