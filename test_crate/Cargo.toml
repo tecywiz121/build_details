@@ -1,7 +1,11 @@
 [package]
 name = "build_details_test"
 version = "0.1.0"
-authors = ["Sam Wilson <tecywiz121@hotmail.com>"]
+authors = ["Sam Wilson <tecywiz121@hotmail.com>", "John Smith <jsmith@example.com>"]
+homepage = "http://example.com/?a_weird_character=\"\""
+description = """Crate for testing
+build_details"""
+publish = false
 
 [build-dependencies]
 build_details = { path = ".." }
