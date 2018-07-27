@@ -55,6 +55,12 @@ In `src/lib.rs` or `src/main.rs`:
 extern crate phf;
 ```
 
+## Limitations
+
+ * Build timestamp isn't regenerated every build. [Issue #1][i1].
+
+[i1]: https://github.com/tecywiz121/build_details/issues/1
+
 ## License
 
 Licensed under the [Mozilla Public License, Version 2.0](LICENSE.md).
