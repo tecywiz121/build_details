@@ -8,15 +8,16 @@
 //! at runtime.
 //!
 //! There are two steps to adding `build_details` to a crate:
-//!     * Adding/modifying `build.rs`; and
-//!     * Including the generated file.
+//!
+//!   * Adding/modifying `build.rs`; and
+//!   * Including the generated file.
 //!
 //! ## Invoking Build Details
 //!
 //! Invoking `build_details` is as simple as adding the following snippet to
 //! `build.rs`:
 //!
-//! ```norun
+//! ```no_run
 //! extern crate build_details;
 //!
 //! fn main() {
@@ -30,7 +31,7 @@
 //!
 //! In `src/lib.rs`:
 //!
-//! ```nocompile
+//! ```no_compile
 //! pub mod build_details {
 //!     include!(concat!(env!("OUT_DIR"), "/build_details.rs"));
 //! }
@@ -49,7 +50,7 @@
 //!
 //! In `src/lib.rs` or `src/main.rs`:
 //!
-//! ```nocompile
+//! ```no_compile
 //! extern crate phf;
 //! ```
 #![deny(
