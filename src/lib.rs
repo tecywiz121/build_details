@@ -85,7 +85,6 @@ impl Default for BuildDetails {
     fn default() -> Self {
         Self {
             optional: hashset![
-                BuildDetail::Timestamp,
                 BuildDetail::Version,
                 BuildDetail::Profile,
                 BuildDetail::RustFlags,
