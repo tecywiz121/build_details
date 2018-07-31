@@ -1,0 +1,13 @@
+environment:
+  PATH: '%PATH%;C:\msys64\mingw64\bin;C:\Users\appveyor\.cargo\bin'
+  matrix:
+    - RUST_CHANNEL: 1.27.0
+    - RUST_CHANNEL: beta
+    - RUST_CHANNEL: nightly
+
+install:
+  - ps: Start-FileDownload "https://win.rustup.rs/" -FileName rustup-init.exe
+  - rustup-init.exe -y --default-host x86_64-pc-windows-msvc --default-toolchain %RUST_CHANNEL%
+
+build_script:
+  - cargo test

@@ -2,6 +2,7 @@ Build Details
 =============
 
 [![Build Status](https://travis-ci.org/tecywiz121/build_details.svg?branch=master)](https://travis-ci.org/tecywiz121/build_details)
+[![Build status](https://ci.appveyor.com/api/projects/status/hk7xw4y0a1wnn06u/branch/master?svg=true)](https://ci.appveyor.com/project/tecywiz121/build-details/branch/master)
 
 ## Introduction
 

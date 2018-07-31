@@ -11,6 +11,7 @@ readme = "README.md"
 
 [badges]
 travis-ci = { repository = "tecywiz121/build_status", branch = "master" }
+appveyor = { repository = "tecywiz121/build_status" }
 
 [workspace]
 members = ["test_crate"]
