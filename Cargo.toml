@@ -9,10 +9,12 @@ keywords = ["build", "codegen", "profile", "build-dependencies"]
 categories = ["development-tools", "development-tools::build-utils"]
 readme = "README.md"
 
+[badges]
+travis-ci = { repository = "tecywiz121/build_status", branch = "master" }
+
 [workspace]
-members = [
-    "test_crate"
-]
+members = ["test_crate"]
+default-members = ["test_crate"]
 
 [dependencies]
 maplit = "1.0.1"

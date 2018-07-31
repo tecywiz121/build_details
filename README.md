@@ -1,6 +1,8 @@
 Build Details
 =============
 
+[![Build Status](https://travis-ci.org/tecywiz121/build_details.svg?branch=master)](https://travis-ci.org/tecywiz121/build_details)
+
 ## Introduction
 
 `build_details` is a code generation helper that provides build information
